@@ -1,7 +1,7 @@
 import validateEmail from "../utils/emailValidation";
 import { MyIncomingMessage, MyServerResponse } from "../types/types";
 import validatePassword from "../utils/validatePassword";
-// import { usersActions } from "../actions/usersActions";
+import { usersActions } from "../actions/usersActions";
 
 interface UserRequestBody {
     email?: string;
@@ -11,44 +11,56 @@ interface UserRequestBody {
 
 const usersController = {
     async signin(req: MyIncomingMessage, res: MyServerResponse) {
-        console.log(req.body);
-
         const { email, password } = req.body as UserRequestBody;
 
         if (!email || !password)
-            res.send!(400, { error: "Email and password are required" });
+            return res.send!(400, { error: "Email and password are required" });
 
         if (!validatePassword(password))
-            res.send!(400, {
+            return res.send!(400, {
                 error: "Password needs to be at least 8 characters",
             });
 
         if (!validateEmail(email!))
-            res.send!(400, { error: "Invalid email address" });
+            return res.send!(400, { error: "Invalid email address" });
 
         try {
-            // const { accessToken } = await usersActions.signin(email, password);
-            res.send!(200, { login: true });
+            const accessToken = await usersActions.signin(email, password);
+
+            return res.send!(200, { accessToken });
         } catch (error) {
-            res.send!(400, { error: "Internal server error" });
+            console.log(error);
+            return res.send!(400, { error: error.message });
         }
     },
 
     async signup(req: MyIncomingMessage, res: MyServerResponse) {
-        console.log(req.body);
         const { email, name, password } = req.body as UserRequestBody;
 
         if (!email || !name || !password)
-            res.send!(400, { error: "Email,name and password are required" });
+            return res.send!(400, {
+                error: "Email,name and password are required",
+            });
 
         if (!validateEmail(email!))
-            res.send!(400, { error: "Invalid email address" });
+            return res.send!(400, { error: "Invalid email address" });
+
+        if (!validatePassword(password))
+            return res.send(400, {
+                error: "Password needs to be at least 8 characters",
+            });
 
         try {
-            // const { accessToken } = await usersActions.signup(email, password);
-            res.send!(200, { register: true });
+            const accessToken = await usersActions.signup(
+                email,
+                password,
+                name
+            );
+
+            return res.send!(200, { accessToken });
         } catch (error) {
-            res.send!(400, { error: "Internal server error" });
+            console.log(error);
+            return res.send!(400, { error: error.message });
         }
     },
 };

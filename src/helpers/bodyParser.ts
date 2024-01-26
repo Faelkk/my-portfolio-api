@@ -18,7 +18,6 @@ export function bodyParser(
         try {
             if (body) {
                 body = JSON.parse(body);
-                console.log(body);
             }
             req.body = body;
             callback();

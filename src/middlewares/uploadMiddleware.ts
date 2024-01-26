@@ -1,4 +1,11 @@
 import multer from "multer";
+import { supabase } from "../connection/supabase"; // Assuming you have a type 'StorageError'
+import env from "../config/config";
+
+interface SupabaseResponse {
+    data?: { path: string };
+    error?: Error;
+}
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -12,7 +19,7 @@ const uploadMiddleware = (fieldNames) => async (req, res, next) => {
 
         const files = req.files;
         if (!files || !files[fieldNames[0]] || !files[fieldNames[1]]) {
-            return res.send(400, {
+            return res.status(400).json({
                 error: "Nenhum arquivo enviado ou arquivos insuficientes",
             });
         }
@@ -21,7 +28,7 @@ const uploadMiddleware = (fieldNames) => async (req, res, next) => {
 
         const handleUpload = async (fieldName, file) => {
             try {
-                const data = await supabase.storage
+                const response: SupabaseResponse = await supabase.storage
                     .from("uploads")
                     .upload(
                         `${Date.now()}--${file.originalname}`,
@@ -31,12 +38,16 @@ const uploadMiddleware = (fieldNames) => async (req, res, next) => {
                         }
                     );
 
-                const baseUrl = `https://your-supabase-url/storage/v1/object/${}/public`;
-                const fileUrl = `${baseUrl}/${data.fullPath}`;
+                if (response.error) {
+                    throw new Error("Error uploading to Supabase Storage");
+                }
 
-                uploadedFiles.push({ ...data, fileUrl });
+                const baseUrl = `${env.supabaseUrl}/storage/v1/object/uploads/public`;
+                const fileUrl = `${baseUrl}/${response.data.path}`;
+
+                uploadedFiles.push({ ...response.data, fileUrl });
             } catch (error) {
-                return res.send(500, {
+                return res.status(500).json({
                     error: "Erro no upload dos arquivos para o Supabase Storage",
                 });
             }
@@ -46,14 +57,16 @@ const uploadMiddleware = (fieldNames) => async (req, res, next) => {
             const file = files[fieldName][0];
             await handleUpload(fieldName, file);
         }
+        console.log(uploadedFiles);
 
         req.uploadedFiles = uploadedFiles;
         next();
     } catch (err) {
-        return res.send(500, {
+        return res.status(500).json({
             error: true,
             message: "Erro no upload dos arquivos",
         });
     }
 };
+
 export default uploadMiddleware;
