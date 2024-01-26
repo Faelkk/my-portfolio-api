@@ -29,7 +29,6 @@ const usersController = {
 
             return res.send!(200, { accessToken });
         } catch (error) {
-            console.log(error);
             return res.send!(400, { error: error.message });
         }
     },
@@ -42,7 +41,7 @@ const usersController = {
                 error: "Email,name and password are required",
             });
 
-        if (!validateEmail(email!))
+        if (!validateEmail(email))
             return res.send!(400, { error: "Invalid email address" });
 
         if (!validatePassword(password))
@@ -53,13 +52,12 @@ const usersController = {
         try {
             const accessToken = await usersActions.signup(
                 email,
-                password,
-                name
+                name,
+                password
             );
 
             return res.send!(200, { accessToken });
         } catch (error) {
-            console.log(error);
             return res.send!(400, { error: error.message });
         }
     },

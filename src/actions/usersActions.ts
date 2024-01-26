@@ -17,7 +17,11 @@ export const usersActions = {
                 await sql`SELECT * FROM users WHERE email = ${email}`;
             const user: User | undefined = userResult[0];
 
-            if (!user || !bycrpt.compareSync(password, user.password)) {
+            if (!user) {
+                throw new Error("User not found");
+            }
+
+            if (!bycrpt.compareSync(password, user.password)) {
                 throw new Error("Invalid email or password");
             }
 
