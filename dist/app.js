@@ -37,13 +37,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const http = __importStar(require("http"));
 const url = __importStar(require("url"));
-const enableCors_1 = require("./helpers/enableCors");
 const routes_1 = __importDefault(require("./routes/routes"));
 const authMiddleware_1 = __importDefault(require("./middlewares/authMiddleware"));
 const handleRoute_1 = __importDefault(require("./handlers/handleRoute"));
 const server = http.createServer((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    if ((0, enableCors_1.handleOptions)(req, res)) {
-        return;
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (req.method === "OPTIONS") {
+        res.writeHead(200);
+        res.end();
+        return true;
     }
     const parsedUrl = url.parse(req.url || "", true);
     let pathname = parsedUrl.pathname || "";
@@ -51,7 +55,6 @@ const server = http.createServer((req, res) => __awaiter(void 0, void 0, void 0,
     if (splitEndPoint.length > 1) {
         pathname = `/${splitEndPoint[0]}/:id`;
     }
-    (0, enableCors_1.enableCors)(res);
     const route = routes_1.default.find((routeOBJ) => routeOBJ.endpoint === pathname && routeOBJ.method === req.method);
     if (route) {
         (0, authMiddleware_1.default)(req, res, () => {

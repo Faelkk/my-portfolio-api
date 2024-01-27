@@ -1,15 +1,28 @@
 import * as http from "http";
 import * as url from "url";
-import { enableCors, handleOptions } from "./helpers/enableCors";
+
 import routes from "./routes/routes";
 import authMiddleware from "./middlewares/authMiddleware";
 import handleRoute from "./handlers/handleRoute";
 
 const server = http.createServer(
     async (req: http.IncomingMessage, res: http.ServerResponse) => {
-        if (handleOptions(req, res)) {
-            return;
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader(
+            "Access-Control-Allow-Methods",
+            "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+        );
+        res.setHeader(
+            "Access-Control-Allow-Headers",
+            "Content-Type, Authorization"
+        );
+
+        if (req.method === "OPTIONS") {
+            res.writeHead(200);
+            res.end();
+            return true;
         }
+
         const parsedUrl = url.parse(req.url || "", true);
 
         let pathname = parsedUrl.pathname || "";
@@ -19,7 +32,6 @@ const server = http.createServer(
             pathname = `/${splitEndPoint[0]}/:id`;
         }
 
-        enableCors(res);
         const route = routes.find(
             (routeOBJ) =>
                 routeOBJ.endpoint === pathname && routeOBJ.method === req.method
