@@ -12,10 +12,6 @@ const projectsController = {
     async listAllProjectsById(req: MyIncomingMessage, res: MyServerResponse) {
         const { userId } = await ActiveUserId(req);
 
-        if (!userId) {
-            res.send(400, "User not found");
-        }
-
         try {
             const { projects } = await projectsActions.listAllProjectsById(
                 userId
@@ -28,10 +24,6 @@ const projectsController = {
     },
     async listOneProjectById(req: MyIncomingMessage, res: MyServerResponse) {
         const { userId } = await ActiveUserId(req);
-
-        if (!userId) {
-            res.send(400, "User not found");
-        }
 
         const { id } = req.params;
 
@@ -48,10 +40,6 @@ const projectsController = {
     },
     async createProject(req: MyIncomingMessage, res: MyServerResponse) {
         const { userId } = await ActiveUserId(req);
-
-        if (!userId) {
-            throw new Error("User not found");
-        }
 
         try {
             const uploadedFiles = req.uploadedFiles;
@@ -92,10 +80,6 @@ const projectsController = {
     async deleteProject(req: MyIncomingMessage, res: MyServerResponse) {
         const { userId } = await ActiveUserId(req);
 
-        if (!userId) {
-            res.send(400, "User not found");
-        }
-
         const { id } = req.params;
 
         try {
@@ -115,9 +99,6 @@ const projectsController = {
     },
     async updateProject(req: MyIncomingMessage, res: MyServerResponse) {
         const { userId } = await ActiveUserId(req);
-        if (!userId) {
-            res.send(400, "User not found");
-        }
 
         const { id } = req.params;
 

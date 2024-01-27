@@ -144,26 +144,3 @@ export const projectsActions = {
         }
     },
 };
-// {
-//     name: "Fincheck",
-//     url: "https://fincheck-fe.vercel.app/",
-//     urlGithub: 'https://github.com/Faelkk/fincheck-fe',
-//     description:
-//       "Fincheck, o seu aplicativo ideal para o controle financeiro, foi desenvolvido com o objetivo de simplificar a gestão das suas finanças. Com a flexibilidade de gerenciar várias contas bancárias, o aplicativo oferece recursos como filtros para despesas e receitas, categorização intuitiva, além da possibilidade de visualizar suas transações de forma organizada por mês ou ano",
-//     cardImage: imagesCard.imageFincheck,
-//     defaultImage: ImagesModal.imgFincheckModal,
-//     technologies: [
-//       {
-//         name: "react",
-//         url: `${baseUrl}?i=react`,
-//       },
-//       {
-//         name: "tailwind",
-//         url: `${baseUrl}?i=tailwind`,
-//       },
-//       {
-//         name: "typescript",
-//         url: `${baseUrl}?i=typescript`,
-//       },
-//     ],
-//   },
