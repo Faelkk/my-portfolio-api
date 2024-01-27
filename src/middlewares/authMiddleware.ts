@@ -37,9 +37,9 @@ function verifyToken(req: MyIncomingMessage) {
     }
 
     try {
-        const decoded = jwt.verify(token, env.jwtSecret!) as { sub: string };
-        req.userId = decoded.sub;
-        console.log(req.userId);
+        const decoded = jwt.verify(token, env.jwtSecret!) as { userId: string };
+
+        req.userId = decoded.userId;
 
         return true;
     } catch (err) {

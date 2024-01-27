@@ -30,8 +30,8 @@ const handleRoute = (
             req.headers["content-type"].startsWith("multipart/form-data")
         ) {
             const uploadHandler = uploadMiddleware([
-                "cardImgProject",
-                "cardDefaultProject",
+                "cardImage",
+                "cardDefault",
             ]);
 
             uploadHandler(req, res, (error) => {
@@ -41,6 +41,8 @@ const handleRoute = (
                     route.handler(req, res);
                 }
             });
+
+            return;
         }
     }
     bodyParserMiddleware(req, res, () => route.handler(req, res));

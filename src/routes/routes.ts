@@ -35,13 +35,13 @@ const routes = [
     },
     {
         endpoint: "/projects/:id",
-        method: "UPDATE",
+        method: "PUT",
         handler: projectsController.updateProject,
     },
     {
         endpoint: "/skills",
         method: "GET",
-        handler: skillsController.listAllSkillsById,
+        handler: skillsController.listAllSkills,
     },
     {
         endpoint: "/skills/:id",
@@ -60,7 +60,7 @@ const routes = [
     },
     {
         endpoint: "/skills/:id",
-        method: "UPDATE",
+        method: "PUT",
         handler: skillsController.updateSkill,
     },
 ];

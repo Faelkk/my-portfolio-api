@@ -1,9 +1,18 @@
-export const ActiveUserId = (req, res) => {
+// activeUserId.js
+import { projectsActions } from "../actions/projectsAction";
+
+export const ActiveUserId = async (req) => {
     const userId = req.userId;
 
     if (!userId) {
-        res.send(400, { error: "unauthorized" });
+        throw new Error("Unauthorized");
     }
 
-    return userId;
+    const userExists = await projectsActions.userExists(userId);
+
+    if (!userExists) {
+        throw new Error("User not found");
+    }
+
+    return { userId };
 };
