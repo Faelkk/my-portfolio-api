@@ -30,3 +30,9 @@ export interface Technology {
     name: string;
     url: string;
 }
+
+export interface Skill {
+    name: string;
+    description: string;
+    url: string;
+}
