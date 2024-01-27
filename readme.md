@@ -11,11 +11,12 @@ Bem-vindo à API Node.js desenvolvida para potencializar o seu portfólio! Esta 
 
 📚 **Bibliotecas**
 
+-   [postgres](https://www.npmjs.com/package/postgres)
 -   [nodemon](https://www.npmjs.com/package/nodemon)
 -   [@supabase/supabase-js](https://www.npmjs.com/package/@supabase/supabase-js)
 -   [bcrypt](https://www.npmjs.com/package/bcrypt)
 -   [dotenv](https://www.npmjs.com/package/dotenv)
--   [dotenjsonwebtokenv](https://www.npmjs.com/package/jsonwebtoken)
+-   [jsonwebtokenv](https://www.npmjs.com/package/jsonwebtoken)
 -   [multer](https://www.npmjs.com/package/multer)
 
 🔋 **Controle de versão e deploy**
