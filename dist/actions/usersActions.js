@@ -13,15 +13,22 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.usersActions = void 0;
-const config_1 = __importDefault(require("../config/config"));
-const connection_1 = __importDefault(require("../connection/connection"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+/* eslint-disable indent */
+const crypto_1 = __importDefault(require("crypto"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const connection_1 = __importDefault(require("../connection/connection"));
+const config_1 = __importDefault(require("../config/config"));
 exports.usersActions = {
     signin(email, password) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const userResult = yield (0, connection_1.default) `SELECT * FROM users WHERE email = ${email}`;
+                const userResult = yield (0, connection_1.default) `
+        SELECT users.*, api_keys.key_value as api_key
+        FROM users
+        LEFT JOIN api_keys ON users.id = api_keys.user_id
+        WHERE email = ${email}
+      `;
                 const user = userResult[0];
                 if (!user) {
                     throw new Error("User not found");
@@ -30,7 +37,7 @@ exports.usersActions = {
                     throw new Error("Invalid email or password");
                 }
                 const accessToken = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email }, config_1.default.jwtSecret, { expiresIn: "7d" });
-                return accessToken;
+                return { accessToken, apiKey: user.api_key };
             }
             catch (error) {
                 throw new Error(error.message);
@@ -44,12 +51,23 @@ exports.usersActions = {
                 if (existingUser.length > 0) {
                     throw new Error("User with the same email already exists");
                 }
+                const apiKey = crypto_1.default.randomBytes(16).toString("hex");
                 const hashedPassword = bcrypt_1.default.hashSync(password, 10);
-                const result = yield (0, connection_1.default) `INSERT INTO users (email, name, password) VALUES (${email}, ${name}, ${hashedPassword}) RETURNING *`;
-                const accessToken = jsonwebtoken_1.default.sign({ userId: result[0].id, email: result[0].email }, config_1.default.jwtSecret, { expiresIn: "7d" });
-                return accessToken;
+                const newUser = yield (0, connection_1.default) ` INSERT INTO users (email, name, password) VALUES (${email}, ${name}, ${hashedPassword}) RETURNING *`;
+                if (!newUser) {
+                    throw new Error("Internal server error");
+                }
+                const apiKeyResult = yield (0, connection_1.default) `
+            INSERT INTO api_keys (key_value, user_id) VALUES (${apiKey}, ${newUser[0].id}) RETURNING *
+        `;
+                if (!apiKeyResult) {
+                    throw new Error("Internal server error");
+                }
+                const accessToken = jsonwebtoken_1.default.sign({ userId: apiKeyResult[0].user_id, email: email }, config_1.default.jwtSecret, { expiresIn: "7d" });
+                return { accessToken, apiKey };
             }
             catch (error) {
+                console.log(error);
                 throw new Error(error.message);
             }
         });

@@ -1,6 +1,7 @@
-import jwt from "jsonwebtoken";
-import env from "../config/config";
 import * as http from "http";
+import env from "../config/config";
+import sql from "../connection/connection";
+import jwt from "jsonwebtoken";
 
 interface MyIncomingMessage extends http.IncomingMessage {
     userId?: string;
@@ -13,12 +14,13 @@ const authMiddleware = (
     res: http.ServerResponse,
     next: () => void
 ) => {
-    const publicRoutes = ["/signin", "/signup"];
+    const isPublicRoute = ["/signin", "/signup"].includes(req.url!);
+    const isWriteOperation = isWriteMethod(req.method);
 
-    if (publicRoutes.includes(req.url!)) {
+    if (isPublicRoute || !isWriteOperation) {
         next();
     } else {
-        const isAuthenticated = verifyToken(req);
+        const isAuthenticated = verifyAuthentication(req);
 
         if (isAuthenticated) {
             next();
@@ -29,20 +31,15 @@ const authMiddleware = (
     }
 };
 
-function verifyToken(req: MyIncomingMessage) {
+function verifyAuthentication(req: MyIncomingMessage) {
     const token = getTokenFromRequest(req);
 
-    if (!token) {
-        return false;
-    }
-
-    try {
-        const decoded = jwt.verify(token, env.jwtSecret!) as { userId: string };
-
-        req.userId = decoded.userId;
-
-        return true;
-    } catch (err) {
+    if (token) {
+        return verifyJWTToken(req, token);
+    } else if (isWriteMethod(req.method)) {
+        const apiKey = getApiKeyFromRequest(req);
+        return apiKey ? validateApiKey(apiKey) : false;
+    } else {
         return false;
     }
 }
@@ -50,8 +47,41 @@ function verifyToken(req: MyIncomingMessage) {
 function getTokenFromRequest(req: MyIncomingMessage) {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(" ")[1];
-
     return token || null;
+}
+
+function getApiKeyFromRequest(req: MyIncomingMessage): string | null {
+    return req.headers.apikey ? String(req.headers.apikey) : null;
+}
+
+function verifyJWTToken(req: MyIncomingMessage, token: string) {
+    try {
+        const decoded = jwt.verify(token, env.jwtSecret!) as {
+            userId: string;
+        };
+        req.userId = decoded.userId;
+        return true;
+    } catch (err) {
+        return false;
+    }
+}
+
+async function validateApiKey(apiKey: string) {
+    try {
+        const result = await sql`
+            SELECT id FROM api_keys
+            WHERE key_value = ${apiKey}
+        `;
+
+        return result.length > 0;
+    } catch (error) {
+        console.error("Erro na validação da API key:", error);
+        return false;
+    }
+}
+
+function isWriteMethod(method: string) {
+    return ["PUT", "DELETE", "POST"].includes(method);
 }
 
 export default authMiddleware;
