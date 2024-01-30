@@ -9,44 +9,60 @@ interface MyIncomingMessage extends http.IncomingMessage {
 
 if (!env) throw new Error("error on connection to database");
 
-const authMiddleware = (
+async function authMiddleware(
     req: http.IncomingMessage,
     res: http.ServerResponse,
     next: () => void
-) => {
+) {
     const isPublicRoute = ["/signin", "/signup"].includes(req.url!);
-    const isWriteOperation = isWriteMethod(req.method);
 
-    if (isPublicRoute || !isWriteOperation) {
+    if (isPublicRoute) {
         next();
     } else {
-        const isAuthenticated = verifyAuthentication(req);
+        try {
+            await verifyJWTTokenFromRequest(req);
 
-        if (isAuthenticated) {
-            next();
-        } else {
-            res.writeHead(400, { "Content-type": "application/json" });
+            if (isWriteMethod(req.method)) {
+                const isApiKeyValid = await validateApiKeyFromRequest(req);
+
+                if (isApiKeyValid) {
+                    next();
+                } else {
+                    res.writeHead(400, { "Content-type": "application/json" });
+                    res.end(JSON.stringify({ error: "unauthorized" }));
+                }
+            } else {
+                next();
+            }
+        } catch (error) {
+            res.writeHead(401, { "Content-type": "application/json" });
             res.end(JSON.stringify({ error: "unauthorized" }));
         }
     }
-};
+}
 
-function verifyAuthentication(req: MyIncomingMessage) {
-    const token = getTokenFromRequest(req);
+async function validateApiKeyFromRequest(req: MyIncomingMessage) {
+    const apiKey = getApiKeyFromRequest(req);
 
-    if (token) {
-        return verifyJWTToken(req, token);
-    } else if (isWriteMethod(req.method)) {
-        const apiKey = getApiKeyFromRequest(req);
-        return apiKey ? validateApiKey(apiKey) : false;
+    if (apiKey) {
+        return await validateApiKey(apiKey, req);
     } else {
         return false;
+    }
+}
+
+async function verifyJWTTokenFromRequest(req: MyIncomingMessage) {
+    const token = await getTokenFromRequest(req);
+
+    if (token) {
+        await verifyJWTToken(req, token);
     }
 }
 
 function getTokenFromRequest(req: MyIncomingMessage) {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(" ")[1];
+
     return token || null;
 }
 
@@ -54,32 +70,29 @@ function getApiKeyFromRequest(req: MyIncomingMessage): string | null {
     return req.headers.apikey ? String(req.headers.apikey) : null;
 }
 
-function verifyJWTToken(req: MyIncomingMessage, token: string) {
+async function verifyJWTToken(req: MyIncomingMessage, token: string) {
     try {
-        const decoded = jwt.verify(token, env.jwtSecret!) as {
+        const decoded = (await jwt.verify(token, env.jwtSecret!)) as {
             userId: string;
         };
         req.userId = decoded.userId;
-        return true;
     } catch (err) {
-        return false;
+        throw new Error("Token verification failed");
     }
 }
 
-async function validateApiKey(apiKey: string) {
+async function validateApiKey(apiKey: string, req: MyIncomingMessage) {
     try {
         const result = await sql`
             SELECT id FROM api_keys
-            WHERE key_value = ${apiKey}
+            WHERE key_value = ${apiKey} AND user_id = ${req.userId}
         `;
 
         return result.length > 0;
     } catch (error) {
-        console.error("Erro na validação da API key:", error);
-        return false;
+        throw new Error("API key validation failed");
     }
 }
-
 function isWriteMethod(method: string) {
     return ["PUT", "DELETE", "POST"].includes(method);
 }

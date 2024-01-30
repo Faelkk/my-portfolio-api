@@ -4,6 +4,8 @@ import { projectsActions } from "../actions/projectsAction";
 export const ActiveUserId = async (req) => {
     const userId = req.userId;
 
+    console.log(userId);
+
     if (!userId) {
         throw new Error("Unauthorized");
     }
